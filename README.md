@@ -22,7 +22,7 @@ Any time you save either package.json or bower.json the typings packages will be
 
 
 #### Commands
-To initially install all typings of a project, open the Command Palette with <kbd>F1</kbd> and type in `Typings: Install definitions for all dependencies`, press <kbd>Enter</kbd> to select it.
+To initially install all types of a project, open the Command Palette with <kbd>F1</kbd> and type in `Types: Install definitions for all dependencies`, press <kbd>Enter</kbd> to select it.
 
 ### Contributing
 Feel free to submit a pull request if you find any bugs (to see a list of active issues, visit the [Issues section](https://github.com/jvitor83/types-autoinstaller/issues)).

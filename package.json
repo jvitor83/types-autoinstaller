@@ -24,14 +24,14 @@
   },
   "activationEvents": [
     "workspaceContains:package.json",
-    "onCommand:typings.installAllDependencies"
+    "onCommand:types.installAllDependencies"
   ],
   "main": "./out/src/extension",
   "contributes": {
     "commands": [
       {
-        "command": "typings.installAllDependencies",
-        "title": "Typings: Install definitions for all dependencies"
+        "command": "types.installAllDependencies",
+        "title": "Types: Install definitions for all dependencies"
       }
     ]
   },
