@@ -1,0 +1,48 @@
+{
+  "name": "types-autoinstaller",
+  "displayName": "Types auto installer",
+  "description": "Any time you save either package.json or bower.json the types package will be installed/uninstalled automatically in the background.",
+  "version": "2.0.0",
+  "publisher": "jvitor83",
+  "author": {
+    "name": "Joao Vitor Paes de Barros do Carmo [https://about.me/jvitor83]"
+  },
+  "engines": {
+    "vscode": "^0.10.6"
+  },
+  "icon": "images/Typings-AutoInstaller-Icon2.png",
+  "categories": [
+    "Other"
+  ],
+  "galleryBanner": {
+    "color": "#ffcc2f",
+    "theme": "light"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvitor83/types-autoinstaller.git"
+  },
+  "activationEvents": [
+    "workspaceContains:package.json",
+    "onCommand:typings.installAllDependencies"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "typings.installAllDependencies",
+        "title": "Typings: Install definitions for all dependencies"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+    "compile": "node ./node_modules/vscode/bin/compile -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "next",
+    "vscode": "^0.11.0"
+  }
+}
