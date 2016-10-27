@@ -121,17 +121,30 @@ function startBowerWatch(context: vscode.ExtensionContext) {
     context.subscriptions.push(watcher);
 }
 
-function installPackages(packageJson: Package, callback: any) {
+function installPackages(packageJson: Package, callback: any, installEngines: boolean = false) {
+    // if(installEngines){
+    //     typingsService.install(packageJson.engines || {}, false, writeOutput, (counte) => {});
+    // }
+    
     typingsService.install(packageJson.dependencies || {}, false, writeOutput, (counta) => {
-        typingsService.install(packageJson.devDependencies || {}, true, writeOutput, (countb) => callback(counta + countb));
+        typingsService.install(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
+            typingsService.install(packageJson.engines || {}, false, writeOutput, (countc) => callback(counta + countb + countc));
+        });
     });
 
 }
 
 function uninstallPackages(packageJson: Package, callback: any) {
-    typingsService.uninstall(packageJson.dependencies, false, writeOutput, (counta) => {
-        typingsService.uninstall(packageJson.devDependencies, true, writeOutput, (countb) => callback(counta + countb));
+
+    typingsService.uninstall(packageJson.dependencies || {}, false, writeOutput, (counta) => {
+        typingsService.uninstall(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
+            typingsService.uninstall(packageJson.engines || {}, false, writeOutput, (countc) => callback(counta + countb + countc));
+        });
     });
+
+    // typingsService.uninstall(packageJson.dependencies, false, writeOutput, (counta) => {
+    //     typingsService.uninstall(packageJson.devDependencies, true, writeOutput, (countb) => callback(counta + countb));
+    // });
 }
 
 function isBowerWatcherDeactivated() {

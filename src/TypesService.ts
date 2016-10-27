@@ -33,8 +33,11 @@ export class TypingsService {
         {
 
             stateCallback(`Installing types package '${key}'\n`);
-
-            let command = `npm install --save-dev @types/${key}`;
+            var saveString = "--save";
+            if (isDev) {
+                saveString = "--save-dev";
+            }
+            let command = `npm install @types/${key} ` + saveString;
 
             childProcess.exec(command, { cwd: rootPath, env: process.env }, (error, stdout, sterr) => {
                 if (sterr && sterr.indexOf('ERR!') > -1) {
@@ -77,8 +80,11 @@ export class TypingsService {
 
     uninstallDependency(key: string, isDev: Boolean = false, stateCallback: StateCallback, rootPath: string, callback: Callback) {
         stateCallback(`Uninstalling types package '${key}'\n`);
-
-        let command = `npm uninstall --save-dev @types/${key}`;
+        var saveString = "--save";
+        if (isDev) {
+            saveString = "--save-dev";
+        }
+        let command = `npm uninstall @types/${key} ` + saveString;
 
         childProcess.exec(command, { cwd: rootPath, env: process.env }, (error, stdout, sterr) => {
             if (!(error == null && stdout.indexOf('@types') > -1)) {

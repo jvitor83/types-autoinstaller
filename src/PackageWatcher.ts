@@ -3,6 +3,7 @@ export interface Dependency {
 }
 
 export interface Package {
+    engines: Dependency;
     dependencies: Dependency;
     devDependencies: Dependency;
 }
@@ -16,8 +17,40 @@ export class PackageWatcher {
     }
 
     changed(changedPackage: Package, detectedChangesCallback: DetectedChangesCallback) {
-        let newPackages: Package = { dependencies: {}, devDependencies: {} };
-        let deletedPackes: Package = { dependencies: {}, devDependencies: {} };
+        let newPackages: Package = { dependencies: {}, devDependencies: {}, engines: {} };
+        let deletedPackes: Package = { dependencies: {}, devDependencies: {}, engines: {} };
+
+        //engines
+        for (let key in changedPackage.engines) {
+            if (this.exisitsPackage(this.packageJson.engines, key)) {
+                newPackages.engines[key] = changedPackage.engines[key];
+            }
+        }
+
+        if(this.packageJson.engines == undefined)
+        {
+            for (let key in changedPackage.engines) 
+            {
+                newPackages.engines[key] = changedPackage.engines[key];
+            }
+        }
+
+
+        if(changedPackage.engines == undefined)
+        {
+            for (let key in this.packageJson.engines) 
+            {
+                deletedPackes.engines[key] = this.packageJson.engines[key];
+            }
+        }
+
+
+        for (let key in this.packageJson.engines) {
+            if (this.exisitsPackage(changedPackage.engines, key)) {
+                deletedPackes.engines[key] = this.packageJson.engines[key];
+            }
+        }
+        //engines
 
         for (let key in changedPackage.dependencies) {
             if (this.exisitsPackage(this.packageJson.dependencies, key)) {
