@@ -15,7 +15,7 @@ Any time you save either package.json or bower.json the typings packages will be
 > 
 > This plugin automatically run this command: 
 > ```shell
-> npm install --save-dev @types/lodash
+> npm install --save @types/lodash
 > ```
 >  
 
