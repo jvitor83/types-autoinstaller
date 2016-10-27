@@ -17,7 +17,6 @@ Any time you save either package.json or bower.json the typings packages will be
 > ```shell
 > npm install --save-dev @types/lodash
 > ```
-> - ***OBS: I choose to always install the declaration packages on `devDependencies` since those is a declaration type `(d.ts)` packages and doesn't contains any source code for a project (used only for dev environment).***
 >  
 
 
