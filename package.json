@@ -28,6 +28,17 @@
   ],
   "main": "./out/src/extension",
   "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Types Auto Installer configuration",
+      "properties": {
+        "types-autoinstaller.saveAsDevDependency": {
+          "type": "boolean",
+          "default": false,
+          "description": "Install @types for \"dependencies\" to the \"devDevependencies\" section of package.json"
+        }
+      }
+    },
     "commands": [
       {
         "command": "types.installAllDependencies",
