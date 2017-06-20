@@ -11,6 +11,7 @@ let typingsService: TypingsService;
 
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel("Types AutoInstaller Watcher");
+    outputChannel.show()
     context.subscriptions.push(outputChannel);
 
     startNpmWatch(context);
@@ -122,29 +123,26 @@ function startBowerWatch(context: vscode.ExtensionContext) {
 }
 
 function installPackages(packageJson: Package, callback: any, installEngines: boolean = false) {
-    // if(installEngines){
-    //     typingsService.install(packageJson.engines || {}, false, writeOutput, (counte) => {});
-    // }
-    
-    typingsService.install(packageJson.dependencies || {}, false, writeOutput, (counta) => {
+    // if devOverride is true, put all @types for regular dependencies into the
+    // devDepenencies section of package.json. This is ideal behaviour if you're
+    // not going to be publishing your package to the registry.
+    let devOverride: boolean = vscode.workspace.getConfiguration('types-autoinstaller').get('saveAsDevDependency')
+
+    typingsService.install(packageJson.dependencies || {}, devOverride, writeOutput, (counta) => {
         typingsService.install(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
             typingsService.install(packageJson.engines || {}, false, writeOutput, (countc) => callback(counta + countb + countc));
         });
     });
-
 }
 
 function uninstallPackages(packageJson: Package, callback: any) {
+    let devOverride: boolean = vscode.workspace.getConfiguration('types-autoinstaller').get('saveAsDevDependency')
 
-    typingsService.uninstall(packageJson.dependencies || {}, false, writeOutput, (counta) => {
+    typingsService.uninstall(packageJson.dependencies || {}, devOverride, writeOutput, (counta) => {
         typingsService.uninstall(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
             typingsService.uninstall(packageJson.engines || {}, false, writeOutput, (countc) => callback(counta + countb + countc));
         });
     });
-
-    // typingsService.uninstall(packageJson.dependencies, false, writeOutput, (counta) => {
-    //     typingsService.uninstall(packageJson.devDependencies, true, writeOutput, (countb) => callback(counta + countb));
-    // });
 }
 
 function isBowerWatcherDeactivated() {
