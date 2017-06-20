@@ -126,7 +126,7 @@ function installPackages(packageJson: Package, callback: any, installEngines: bo
     // if devOverride is true, put all @types for regular dependencies into the
     // devDepenencies section of package.json. This is ideal behaviour if you're
     // not going to be publishing your package to the registry.
-    let devOverride: boolean = vscode.workspace.getConfiguration('types-autoinstaller').get('saveAsDevDependency')
+    let devOverride: boolean = vscode.workspace.getConfiguration('types-autoinstaller').get('saveAsDevDependency') as boolean;
 
     typingsService.install(packageJson.dependencies || {}, devOverride, writeOutput, (counta) => {
         typingsService.install(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
@@ -136,7 +136,7 @@ function installPackages(packageJson: Package, callback: any, installEngines: bo
 }
 
 function uninstallPackages(packageJson: Package, callback: any) {
-    let devOverride: boolean = vscode.workspace.getConfiguration('types-autoinstaller').get('saveAsDevDependency')
+    let devOverride: boolean = vscode.workspace.getConfiguration('types-autoinstaller').get('saveAsDevDependency') as boolean;
 
     typingsService.uninstall(packageJson.dependencies || {}, devOverride, writeOutput, (counta) => {
         typingsService.uninstall(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
