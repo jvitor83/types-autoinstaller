@@ -6,7 +6,6 @@
 			"es6"
 		],
 		"outDir": "out",
-		"noLib": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"rootDir": ".",
