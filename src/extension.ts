@@ -1,8 +1,7 @@
-"use strict";
-
+import * as fs from "fs";
 import * as vscode from "vscode";
-import {Package, PackageWatcher} from "./PackageWatcher";
-import {TypingsService} from "./TypesService";
+import { Package, PackageWatcher } from "./PackageWatcher";
+import { TypingsService } from "./TypesService";
 
 let npmPackageWatcher: PackageWatcher;
 let bowerPackageWatcher: PackageWatcher;
@@ -165,10 +164,15 @@ function isBowerWatcherDeactivated() {
 }
 
 function initBowerWatcher(path: string) {
-    vscode.workspace.openTextDocument(path).then((file) => {
-        const bowerJson: Package = JSON.parse(file.getText());
-        bowerPackageWatcher = new PackageWatcher(bowerJson);
-        typingsService = new TypingsService(vscode.workspace.rootPath);
+    fs.readFile(path, "utf8", (err, data) => {
+        if (data) {
+            const bowerJson: Package = JSON.parse(data);
+            bowerPackageWatcher = new PackageWatcher(bowerJson);
+            typingsService = new TypingsService(vscode.workspace.rootPath);
+        } else if (err && !err.message.includes("ENOENT: no such file")) {
+            // throw the error, unless bower.json doesn't exist
+            throw err;
+        }
     });
 }
 
@@ -177,4 +181,4 @@ function writeOutput(message: string) {
 }
 
 // tslint:disable-next-line:no-empty
-export function deactivate() {}
+export function deactivate() { }
