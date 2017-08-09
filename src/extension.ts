@@ -128,7 +128,7 @@ function startBowerWatch(context: vscode.ExtensionContext) {
     context.subscriptions.push(watcher);
 }
 
-function installPackages(packageJson: Package, callback: any, installEngines: boolean = false) {
+function installPackages(packageJson: Package, callback: any) {
     // if devOverride is true, put all @types for regular dependencies into the
     // devDepenencies section of package.json. This is ideal behaviour if you're
     // not going to be publishing your package to the registry.
@@ -136,11 +136,7 @@ function installPackages(packageJson: Package, callback: any, installEngines: bo
 
     typingsService.install(packageJson.dependencies || {}, devOverride, writeOutput, (depCount) => {
         typingsService.install(packageJson.devDependencies || {}, true, writeOutput, (devDepCount) => {
-            typingsService.install(
-                packageJson.engines || {},
-                false, writeOutput,
-                (engineCount) => callback(depCount + devDepCount + engineCount),
-            );
+            return callback(depCount + devDepCount);
         });
     });
 }
@@ -150,11 +146,7 @@ function uninstallPackages(packageJson: Package, callback: any) {
 
     typingsService.uninstall(packageJson.dependencies || {}, devOverride, writeOutput, (depCount) => {
         typingsService.uninstall(packageJson.devDependencies || {}, true, writeOutput, (devDepCount) => {
-            typingsService.uninstall(
-                packageJson.engines || {},
-                false, writeOutput,
-                (engineCount) => callback(depCount + devDepCount + engineCount),
-            );
+            callback(depCount + devDepCount);
         });
     });
 }
