@@ -1,10 +1,11 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { Package, PackageWatcher } from "./PackageWatcher";
+import { Package } from "./Package";
+import { PackageJson } from "./shared";
 import { ChangeCallback, TypingsService } from "./TypesService";
 
-let npmPackageWatcher: PackageWatcher;
-let bowerPackageWatcher: PackageWatcher;
+let npmPackageWatcher: Package;
+let bowerPackageWatcher: Package;
 let outputChannel: vscode.OutputChannel;
 let typingsService: TypingsService;
 
@@ -26,9 +27,8 @@ export function activate(context: vscode.ExtensionContext) {
 function installAllDependencies(context: vscode.ExtensionContext) {
     const npmPath = vscode.workspace.rootPath + "/package.json";
     vscode.workspace.openTextDocument(npmPath).then((file) => {
-        const packageJson: Package = JSON.parse(file.getText());
         // Install
-        installPackages(packageJson, (count) => {
+        installPackages(new Package(file), (count) => {
             writeOutput(`Installed Types of ${count} npm package(s)\n`);
             readBower();
         });
@@ -39,9 +39,8 @@ function installAllDependencies(context: vscode.ExtensionContext) {
     const readBower = () => {
         const bowerPath = vscode.workspace.rootPath + "/bower.json";
         vscode.workspace.openTextDocument(bowerPath).then((file) => {
-            const packageJson: Package = JSON.parse(file.getText());
             // Install
-            installPackages(packageJson, (count) => {
+            installPackages(new Package(file), (count) => {
                 writeOutput(`Installed Types of ${count} bower package(s)\n`);
             });
         });
@@ -60,15 +59,14 @@ function startNpmWatch(context: vscode.ExtensionContext) {
         }
 
         vscode.workspace.openTextDocument(path).then((file) => {
-            const packageJson: Package = JSON.parse(file.getText());
-            npmPackageWatcher.changed(packageJson, (newPackages, deletedPackes) => {
+            npmPackageWatcher.changed(new Package(file), (newPackages, deletedPackages) => {
                 // Install
                 installPackages(newPackages, (installCount) => {
                     if (installCount) {
                         writeOutput(`Installed Types of ${installCount} npm package(s)\n`);
                     }
                     // Uninstall
-                    uninstallPackages(deletedPackes, (uninstallCount) => {
+                    uninstallPackages(deletedPackages, (uninstallCount) => {
                         if (uninstallCount) {
                             writeOutput(`Uninstalled Types of ${uninstallCount} npm package(s)\n`);
                         }
@@ -88,8 +86,7 @@ function isNpmWatcherDeactivated() {
 function initNpmWatcher(path: string) {
     vscode.workspace.openTextDocument(path).then((file) => {
         if (file != null) {
-            const packageJson: Package = JSON.parse(file.getText());
-            npmPackageWatcher = new PackageWatcher(packageJson);
+            npmPackageWatcher = new Package(file);
             typingsService = new TypingsService(vscode.workspace.rootPath);
         }
     });
@@ -107,15 +104,14 @@ function startBowerWatch(context: vscode.ExtensionContext) {
         }
 
         vscode.workspace.openTextDocument(path).then((file) => {
-            const bowerJson: Package = JSON.parse(file.getText());
-            bowerPackageWatcher.changed(bowerJson, (newPackages, deletedPackes) => {
+            bowerPackageWatcher.changed(new Package(file), (newPackages, deletedPackages) => {
                 // Install
                 installPackages(newPackages, (installCount) => {
                     if (installCount) {
                         writeOutput(`Installed Types of ${installCount} bower package(s)\n`);
                     }
                     // Uninstall
-                    uninstallPackages(deletedPackes, (uninstallCount) => {
+                    uninstallPackages(deletedPackages, (uninstallCount) => {
                         if (uninstallCount) {
                             writeOutput(`Uninstalled Types of ${uninstallCount} bower package(s)\n`);
                         }
@@ -128,7 +124,7 @@ function startBowerWatch(context: vscode.ExtensionContext) {
     context.subscriptions.push(watcher);
 }
 
-function installPackages(packageJson: Package, callback: ChangeCallback) {
+function installPackages(packageJson: PackageJson, callback: ChangeCallback) {
     // if devOverride is true, put all @types for regular dependencies into the
     // devDepenencies section of package.json. This is ideal behaviour if you're
     // not going to be publishing your package to the registry.
@@ -141,7 +137,7 @@ function installPackages(packageJson: Package, callback: ChangeCallback) {
     });
 }
 
-function uninstallPackages(packageJson: Package, callback: ChangeCallback) {
+function uninstallPackages(packageJson: PackageJson, callback: ChangeCallback) {
     const devOverride: boolean = vscode.workspace.getConfiguration("types-autoinstaller").get("saveAsDevDependency");
 
     typingsService.uninstall(packageJson.dependencies || {}, devOverride, writeOutput, (depCount) => {
@@ -156,10 +152,11 @@ function isBowerWatcherDeactivated() {
 }
 
 function initBowerWatcher(path: string) {
+    // using fs here since using vscode.workspace.openTextDocument causes errors to be
+    // thrown if bower.json doesn't exist
     fs.readFile(path, "utf8", (err, data) => {
         if (data) {
-            const bowerJson: Package = JSON.parse(data);
-            bowerPackageWatcher = new PackageWatcher(bowerJson);
+            bowerPackageWatcher = new Package(data);
             typingsService = new TypingsService(vscode.workspace.rootPath);
         } else if (err && !err.message.includes("ENOENT: no such file")) {
             // throw the error, unless bower.json doesn't exist

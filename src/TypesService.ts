@@ -1,5 +1,5 @@
 import * as childProcess from "child_process";
-import { Dependency } from "./PackageWatcher";
+import { Dependency } from "./shared";
 
 export class TypingsService {
     constructor(private rootPath: string) { }
