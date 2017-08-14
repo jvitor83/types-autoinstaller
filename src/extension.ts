@@ -59,18 +59,17 @@ function startNpmWatch(context: vscode.ExtensionContext) {
         }
 
         vscode.workspace.openTextDocument(path).then((file) => {
-            npmPackageWatcher.changed(new Package(file), (newPackages, deletedPackages) => {
-                // Install
-                installPackages(newPackages, (installCount) => {
-                    if (installCount) {
-                        writeOutput(`Installed Types of ${installCount} npm package(s)\n`);
+            const changes = npmPackageWatcher.getDifferences(new Package(file));
+            // Install
+            installPackages(changes.newDeps, (installCount) => {
+                if (installCount) {
+                    writeOutput(`Installed Types of ${installCount} npm package(s)\n`);
+                }
+                // Uninstall
+                uninstallPackages(changes.removedDeps, (uninstallCount) => {
+                    if (uninstallCount) {
+                        writeOutput(`Uninstalled Types of ${uninstallCount} npm package(s)\n`);
                     }
-                    // Uninstall
-                    uninstallPackages(deletedPackages, (uninstallCount) => {
-                        if (uninstallCount) {
-                            writeOutput(`Uninstalled Types of ${uninstallCount} npm package(s)\n`);
-                        }
-                    });
                 });
             });
         });
@@ -104,18 +103,17 @@ function startBowerWatch(context: vscode.ExtensionContext) {
         }
 
         vscode.workspace.openTextDocument(path).then((file) => {
-            bowerPackageWatcher.changed(new Package(file), (newPackages, deletedPackages) => {
-                // Install
-                installPackages(newPackages, (installCount) => {
-                    if (installCount) {
-                        writeOutput(`Installed Types of ${installCount} bower package(s)\n`);
+            const changes = bowerPackageWatcher.getDifferences(new Package(file));
+            // Install
+            installPackages(changes.newDeps, (installCount) => {
+                if (installCount) {
+                    writeOutput(`Installed Types of ${installCount} bower package(s)\n`);
+                }
+                // Uninstall
+                uninstallPackages(changes.removedDeps, (uninstallCount) => {
+                    if (uninstallCount) {
+                        writeOutput(`Uninstalled Types of ${uninstallCount} bower package(s)\n`);
                     }
-                    // Uninstall
-                    uninstallPackages(deletedPackages, (uninstallCount) => {
-                        if (uninstallCount) {
-                            writeOutput(`Uninstalled Types of ${uninstallCount} bower package(s)\n`);
-                        }
-                    });
                 });
             });
         });

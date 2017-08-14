@@ -22,12 +22,11 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(Object.keys(newPackages.dependencies).length, 0);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 0);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 0);
     });
 
     test("One new dependency package", () => {
@@ -50,13 +49,12 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(newPackages.dependencies.jasmine, "*");
-            assert.equal(Object.keys(newPackages.dependencies).length, 1);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 0);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.newDeps.dependencies.jasmine, "*");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 1);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 0);
     });
 
     test("Two new dependency package", () => {
@@ -80,14 +78,13 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(newPackages.dependencies.jasmine, "*");
-            assert.equal(newPackages.dependencies["jasmine-node"], "*");
-            assert.equal(Object.keys(newPackages.dependencies).length, 2);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 0);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.newDeps.dependencies.jasmine, "*");
+        assert.equal(changes.newDeps.dependencies["jasmine-node"], "*");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 2);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 0);
     });
 
     test("One new devDependency package", () => {
@@ -108,13 +105,12 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(newPackages.devDependencies.vscode, "^0.11.0");
-            assert.equal(Object.keys(newPackages.dependencies).length, 0);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 1);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 0);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.newDeps.devDependencies.vscode, "^0.11.0");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 1);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 0);
     });
 
     test("Two new devDependency package", () => {
@@ -136,14 +132,13 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(newPackages.devDependencies.vscode, "^0.11.0");
-            assert.equal(newPackages.devDependencies.typescript, "*");
-            assert.equal(Object.keys(newPackages.dependencies).length, 0);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 2);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 0);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.newDeps.devDependencies.vscode, "^0.11.0");
+        assert.equal(changes.newDeps.devDependencies.typescript, "*");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 2);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 0);
     });
 
     test("One deleted dependency package", () => {
@@ -162,13 +157,12 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(deletedPackages.dependencies.json2ts, "^0.0.7");
-            assert.equal(Object.keys(newPackages.dependencies).length, 0);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 1);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 0);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.removedDeps.dependencies.json2ts, "^0.0.7");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 1);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 0);
     });
 
     test("Two deleted dependency package", () => {
@@ -188,14 +182,13 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(deletedPackages.dependencies.json2ts, "^0.0.7");
-            assert.equal(deletedPackages.dependencies.rxjs, "*");
-            assert.equal(Object.keys(newPackages.dependencies).length, 0);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 2);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 0);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.removedDeps.dependencies.json2ts, "^0.0.7");
+        assert.equal(changes.removedDeps.dependencies.rxjs, "*");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 2);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 0);
     });
 
     test("One deleted devDependency package", () => {
@@ -216,13 +209,12 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(deletedPackages.devDependencies.vscode, "^0.11.0");
-            assert.equal(Object.keys(newPackages.dependencies).length, 0);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 1);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.removedDeps.devDependencies.vscode, "^0.11.0");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 1);
     });
 
     test("Two deleted devDependency package", () => {
@@ -244,14 +236,13 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(deletedPackages.devDependencies.vscode, "^0.11.0");
-            assert.equal(deletedPackages.devDependencies.typescript, "*");
-            assert.equal(Object.keys(newPackages.dependencies).length, 0);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 0);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 2);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.removedDeps.devDependencies.vscode, "^0.11.0");
+        assert.equal(changes.removedDeps.devDependencies.typescript, "*");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 0);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 2);
     });
 
     test("Cross dependencies changed", () => {
@@ -275,15 +266,14 @@ suite("package-watcher Tests", () => {
             },
         });
 
-        packageJson.changed(changedPackageJson, (newPackages, deletedPackages) => {
-            assert.equal(newPackages.dependencies.rxjs, "*");
-            assert.equal(newPackages.devDependencies.gulp, "*");
-            assert.equal(deletedPackages.dependencies.json2ts, "^0.0.7");
-            assert.equal(deletedPackages.devDependencies.typescript, "*");
-            assert.equal(Object.keys(newPackages.dependencies).length, 1);
-            assert.equal(Object.keys(newPackages.devDependencies).length, 1);
-            assert.equal(Object.keys(deletedPackages.dependencies).length, 1);
-            assert.equal(Object.keys(deletedPackages.devDependencies).length, 1);
-        });
+        const changes = packageJson.getDifferences(changedPackageJson);
+        assert.equal(changes.newDeps.dependencies.rxjs, "*");
+        assert.equal(changes.newDeps.devDependencies.gulp, "*");
+        assert.equal(changes.removedDeps.dependencies.json2ts, "^0.0.7");
+        assert.equal(changes.removedDeps.devDependencies.typescript, "*");
+        assert.equal(Object.keys(changes.newDeps.dependencies).length, 1);
+        assert.equal(Object.keys(changes.newDeps.devDependencies).length, 1);
+        assert.equal(Object.keys(changes.removedDeps.dependencies).length, 1);
+        assert.equal(Object.keys(changes.removedDeps.devDependencies).length, 1);
     });
 });

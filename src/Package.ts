@@ -5,7 +5,10 @@ import { Dependency, PackageJson } from "./shared";
 type DepName = string;
 type Version = string;
 type PackageSection = "dependencies" | "devDependencies";
-type DetectedChangesCallback = (newPackages: PackageJson, deletedPackages: PackageJson) => any;
+interface PackageDiff {
+    newDeps: PackageJson;
+    removedDeps: PackageJson;
+}
 
 export class Package implements PackageJson {
     public dependencies: Dependency;
@@ -33,16 +36,17 @@ export class Package implements PackageJson {
         this.devDependencies = newJson.devDependencies;
     }
 
-    public changed(changedPackage: Package, detectedChangesCallback: DetectedChangesCallback) {
-        const newPackages: PackageJson = { dependencies: {}, devDependencies: {} };
-        const deletedPackages: PackageJson = { dependencies: {}, devDependencies: {} };
+    public getDifferences(changedPackage: Package): PackageDiff {
+        // returns the differences between the deps in the current Package and another Package
+        const newDeps: PackageJson = { dependencies: {}, devDependencies: {} };
+        const removedDeps: PackageJson = { dependencies: {}, devDependencies: {} };
 
         ["dependencies", "devDependencies"].forEach((section: PackageSection) => {
             // loop through the current deps and compare with the new changedPackage to see if
             // any were removed
             _.forOwn(this[section], (version, depName) => {
                 if (this.isRemovedDep(depName, changedPackage, section)) {
-                    deletedPackages[section][depName] = version;
+                    removedDeps[section][depName] = version;
                 }
             });
 
@@ -50,14 +54,12 @@ export class Package implements PackageJson {
             // any are new/updated/downgraded
             _.forOwn(changedPackage[section], (version, depName) => {
                 if (this.isNewOrChangedDep(depName, version, section)) {
-                    newPackages[section][depName] = version;
+                    newDeps[section][depName] = version;
                 }
             });
         });
 
-        this.dependencies = changedPackage.dependencies;
-        this.devDependencies = changedPackage.devDependencies;
-        detectedChangesCallback(newPackages, deletedPackages);
+        return { newDeps, removedDeps };
     }
 
     private isNewDep(depName: DepName, section: PackageSection): boolean {
