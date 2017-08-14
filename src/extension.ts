@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
 import { Package, PackageWatcher } from "./PackageWatcher";
-import { TypingsService } from "./TypesService";
+import { ChangeCallback, TypingsService } from "./TypesService";
 
 let npmPackageWatcher: PackageWatcher;
 let bowerPackageWatcher: PackageWatcher;
@@ -128,7 +128,7 @@ function startBowerWatch(context: vscode.ExtensionContext) {
     context.subscriptions.push(watcher);
 }
 
-function installPackages(packageJson: Package, callback: any) {
+function installPackages(packageJson: Package, callback: ChangeCallback) {
     // if devOverride is true, put all @types for regular dependencies into the
     // devDepenencies section of package.json. This is ideal behaviour if you're
     // not going to be publishing your package to the registry.
@@ -141,7 +141,7 @@ function installPackages(packageJson: Package, callback: any) {
     });
 }
 
-function uninstallPackages(packageJson: Package, callback: any) {
+function uninstallPackages(packageJson: Package, callback: ChangeCallback) {
     const devOverride: boolean = vscode.workspace.getConfiguration("types-autoinstaller").get("saveAsDevDependency");
 
     typingsService.uninstall(packageJson.dependencies || {}, devOverride, writeOutput, (depCount) => {

@@ -1,5 +1,4 @@
 import * as assert from "assert";
-import * as vscode from "vscode";
 import { Package, PackageWatcher } from "../src/PackageWatcher";
 
 suite("package-watcher Tests", () => {

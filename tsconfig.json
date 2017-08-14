@@ -8,7 +8,9 @@
 		"outDir": "out",
 		"skipLibCheck": true,
 		"sourceMap": true,
+		"strict": true,
 		"rootDir": ".",
+		"noUnusedLocals": true,
 		"watch": false
 	},
 	"exclude": [

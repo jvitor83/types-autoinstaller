@@ -1,17 +1,22 @@
 import * as childProcess from "child_process";
-import {Dependency} from "./PackageWatcher";
+import { Dependency } from "./PackageWatcher";
 
 export class TypingsService {
     constructor(private rootPath: string) { }
 
-    public install(dependency: Dependency, isDev: boolean = false, stateCallback: StateCallback, callback: any) {
-        const installCommands = Object.keys(dependency).map((key) => (installCb) => {
+    public install(
+        dependency: Dependency,
+        isDev: boolean = false,
+        stateCallback: StateCallback,
+        callback: ChangeCallback,
+    ) {
+        const installCommands = Object.keys(dependency).map((key) => (installCb: any) => {
             return this.installDependency(key, isDev, stateCallback, this.rootPath, installCb);
         });
         if (installCommands && installCommands.length) {
             let successCount = 0;
-            const run = (index) => {
-                installCommands[index]((success) => {
+            const run = (index: number) => {
+                installCommands[index]((success: boolean) => {
                     if (success) {
                         successCount++;
                     }
@@ -25,15 +30,20 @@ export class TypingsService {
         }
     }
 
-    public uninstall(dependency: Dependency, isDev: boolean = false, stateCallback: StateCallback, callback: any) {
-        const uninstallCommands = Object.keys(dependency).map((key) => (uninstallCb) => {
+    public uninstall(
+        dependency: Dependency,
+        isDev: boolean = false,
+        stateCallback: StateCallback,
+        callback: ChangeCallback,
+    ) {
+        const uninstallCommands = Object.keys(dependency).map((key) => (uninstallCb: any) => {
             return this.uninstallDependency(key, isDev, stateCallback, this.rootPath, uninstallCb);
         });
 
         if (uninstallCommands && uninstallCommands.length) {
             let successCount = 0;
-            const run = (index) => {
-                uninstallCommands[index]((success) => {
+            const run = (index: number) => {
+                uninstallCommands[index]((success: boolean) => {
                     if (success) {
                         successCount++;
                     }
@@ -106,6 +116,6 @@ export class TypingsService {
     }
 }
 
-type StateCallback = (state) => any;
-
-type Callback = (success) => boolean;
+type StateCallback = (message: string) => any;
+type Callback = (success: boolean) => boolean;
+export type ChangeCallback = (count: number) => any;
