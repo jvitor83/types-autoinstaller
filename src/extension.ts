@@ -1,166 +1,141 @@
-"use strict";
-
+import * as fs from "fs";
+import * as path from "path";
 import * as vscode from "vscode";
-import {Package, PackageWatcher} from "./PackageWatcher";
-import {TypingsService} from "./TypesService";
+import { Package } from "./Package";
+import * as shared from "./shared";
+import { ChangeCallback, TypingsService } from "./TypesService";
 
-let npmPackageWatcher: PackageWatcher;
-let bowerPackageWatcher: PackageWatcher;
+type FileName = "package.json" | "bower.json";
+const fileNames: [FileName] = ["package.json", "bower.json"];
+
+// to store the json of package.json and bower.json
+const packages: { [fileName: string]: Package } = {};
 let outputChannel: vscode.OutputChannel;
 let typingsService: TypingsService;
 
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel("Types AutoInstaller Watcher");
-    outputChannel.show()
+    outputChannel.show();
     context.subscriptions.push(outputChannel);
 
-    startNpmWatch(context);
-    startBowerWatch(context);
+    fileNames.forEach((fileName: FileName) => {
+        // initiate a Package for the file
+        const filePath = path.join(vscode.workspace.rootPath, fileName);
+        initPackage(fileName, filePath);
 
-    var installAllDependenciesCommand = vscode.commands.registerCommand('types.installAllDependencies', (context) => {
-        installAllDependencies(context);
+        // start a watcher for the file
+        const watcher = vscode.workspace.createFileSystemWatcher(filePath);
+        watcher.onDidChange(packageOnChange(fileName, filePath));
+        context.subscriptions.push(watcher);
     });
+
+    const installAllDependenciesCommand = vscode.commands.registerCommand(
+        "types.installAllDependencies",
+        (commandContext) => installAllDependencies(commandContext),
+    );
     context.subscriptions.push(installAllDependenciesCommand);
 }
 
 function installAllDependencies(context: vscode.ExtensionContext) {
-    let npmPath = vscode.workspace.rootPath + "/package.json";
-    vscode.workspace.openTextDocument(npmPath).then((file) => {
-        let packageJson: Package = JSON.parse(file.getText());
-        // Install
-        installPackages(packageJson, (count) => {
-            writeOutput(`Installed Types of ${count} npm package(s)\n`);
-            readBower();
+    fileNames.forEach((fileName) => {
+        installPackages(packages[fileName], (count) => {
+            reportResults(fileName, "Install", count);
         });
-    }, () => {
-        readBower();
     });
+}
 
-    const readBower = () => {
-        let bowerPath = vscode.workspace.rootPath + "/bower.json";
-        vscode.workspace.openTextDocument(bowerPath).then((file) => {
-            let packageJson: Package = JSON.parse(file.getText());
-            // Install
-            installPackages(packageJson, (count) => {
-                writeOutput(`Installed Types of ${count} bower package(s)\n`);
-            });
-        });
+function readPackage(filePath: string): Promise<Package> {
+    // we need to wait 1 second before reading package.json/bower.json in order to give vscode
+    // time to pick up the changes (if any).
+    return wait(1000).then((): Promise<Package> => {
+        return readFilePromise(filePath);
+    });
+}
+
+async function initPackage(fileName: FileName, filePath: string) {
+    // initiates a Package for the given file, e.g package.json
+    try {
+        packages[fileName] = await readPackage(filePath);
+    } catch (err) {
+        packages[fileName] = new Package({ dependencies: {}, devDependencies: {} });
+        writeOutput(`The following error occurred while reading ${fileName}:\n${err.message}\n`);
     }
+    typingsService = new TypingsService(vscode.workspace.rootPath);
 }
 
-function startNpmWatch(context: vscode.ExtensionContext) {
-    let path = vscode.workspace.rootPath + "/package.json";
+function packageOnChange(fileName: FileName, filePath: string) {
+    return async (e: vscode.Uri) => {
+        // creates a package that reflects the changed file
+        const changedPackage = await readPackage(filePath);
 
-    initNpmWatcher(path);
+        // gets the differences between the current package and the changed one
+        const changes = packages[fileName].getDifferences(changedPackage);
 
-    let watcher = vscode.workspace.createFileSystemWatcher(path);
-    watcher.onDidChange((e) => {
-        if (isNpmWatcherDeactivated()) {
-            initNpmWatcher(path);
-        }
+        // update our package with a reference to the changed one
+        packages[fileName] = changedPackage;
 
-        vscode.workspace.openTextDocument(path).then((file) => {
-            let packageJson: Package = JSON.parse(file.getText());
-            npmPackageWatcher.changed(packageJson, (newPackages, deletedPackes) => {
-                // Install
-                installPackages(newPackages, (count) => {
-                    if(count) writeOutput(`Installed Types of ${count} npm package(s)\n`)
-                    // Uninstall
-                    uninstallPackages(deletedPackes, (count) => {
-                        if(count) writeOutput(`Uninstalled Types of ${count} npm package(s)\n`)
-                    });
-                });
+        installPackages(changes.newDeps, (installCount) => {
+            if (installCount) {
+                reportResults(fileName, "Install", installCount);
+            }
+
+            uninstallPackages(changes.removedDeps, (uninstallCount) => {
+                if (uninstallCount) {
+                    reportResults(fileName, "Uninstall", installCount);
+                }
             });
         });
-    });
-
-    context.subscriptions.push(watcher);
+    };
 }
 
-function isNpmWatcherDeactivated() {
-    return !npmPackageWatcher;
-}
-
-function initNpmWatcher(path: string) {
-    vscode.workspace.openTextDocument(path).then((file) => {
-        if (file != null) {
-            let packageJson: Package = JSON.parse(file.getText());
-            npmPackageWatcher = new PackageWatcher(packageJson);
-            typingsService = new TypingsService(vscode.workspace.rootPath);
-        }
-    });
-}
-
-
-
-function startBowerWatch(context: vscode.ExtensionContext) {
-    let path = vscode.workspace.rootPath + "/bower.json";
-
-    initBowerWatcher(path);
-
-    let watcher = vscode.workspace.createFileSystemWatcher(path);
-    watcher.onDidChange((e) => {
-        if (isBowerWatcherDeactivated()) {
-            initBowerWatcher(path);
-        }
-
-        vscode.workspace.openTextDocument(path).then((file) => {
-            let bowerJson: Package = JSON.parse(file.getText());
-            bowerPackageWatcher.changed(bowerJson, (newPackages, deletedPackes) => {
-                // Install
-                installPackages(newPackages, (count) => {
-                    if(count) writeOutput(`Installed Types of ${count} bower package(s)\n`)
-                    // Uninstall
-                    uninstallPackages(deletedPackes, (count) => {
-                        if(count) writeOutput(`Uninstalled Types of ${count} bower package(s)\n`)
-                    });
-                });
-            });
-        });
-    });
-
-    context.subscriptions.push(watcher);
-}
-
-function installPackages(packageJson: Package, callback: any, installEngines: boolean = false) {
+function installPackages(packageJson: shared.PackageJson, callback: ChangeCallback) {
     // if devOverride is true, put all @types for regular dependencies into the
     // devDepenencies section of package.json. This is ideal behaviour if you're
     // not going to be publishing your package to the registry.
-    let devOverride: boolean = vscode.workspace.getConfiguration('types-autoinstaller').get('saveAsDevDependency') as boolean;
+    const devOverride: boolean = vscode.workspace.getConfiguration("types-autoinstaller").get("saveAsDevDependency");
 
-    typingsService.install(packageJson.dependencies || {}, devOverride, writeOutput, (counta) => {
-        typingsService.install(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
-            typingsService.install(packageJson.engines || {}, false, writeOutput, (countc) => callback(counta + countb + countc));
+    typingsService.install(packageJson.dependencies || {}, devOverride, writeOutput, (depCount) => {
+        typingsService.install(packageJson.devDependencies || {}, true, writeOutput, (devDepCount) => {
+            return callback(depCount + devDepCount);
         });
     });
 }
 
-function uninstallPackages(packageJson: Package, callback: any) {
-    let devOverride: boolean = vscode.workspace.getConfiguration('types-autoinstaller').get('saveAsDevDependency') as boolean;
+function uninstallPackages(packageJson: shared.PackageJson, callback: ChangeCallback) {
+    const devOverride: boolean = vscode.workspace.getConfiguration("types-autoinstaller").get("saveAsDevDependency");
 
-    typingsService.uninstall(packageJson.dependencies || {}, devOverride, writeOutput, (counta) => {
-        typingsService.uninstall(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
-            typingsService.uninstall(packageJson.engines || {}, false, writeOutput, (countc) => callback(counta + countb + countc));
+    typingsService.uninstall(packageJson.dependencies || {}, devOverride, writeOutput, (depCount) => {
+        typingsService.uninstall(packageJson.devDependencies || {}, true, writeOutput, (devDepCount) => {
+            callback(depCount + devDepCount);
         });
     });
 }
 
-function isBowerWatcherDeactivated() {
-    return !bowerPackageWatcher;
+function reportResults(fileName: FileName, changeType: "Install" | "Uninstall", count: number) {
+    const packageType = fileName === "package.json" ? "npm" : "bower";
+    writeOutput(`${changeType}ed types for ${count} ${packageType} dependencies\n`);
 }
-
-function initBowerWatcher(path: string) {
-    vscode.workspace.openTextDocument(path).then((file) => {
-        let bowerJson: Package = JSON.parse(file.getText());
-        bowerPackageWatcher = new PackageWatcher(bowerJson);
-        typingsService = new TypingsService(vscode.workspace.rootPath);
-    });
-}
-
 
 function writeOutput(message: string) {
     outputChannel.append(message);
 }
 
-export function deactivate() {
+function wait(ms: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
 }
+
+function readFilePromise(filePath: string): Promise<Package> {
+    // using fs instead of vscode.workspace.openTextDocument so that all errors
+    // can be handled. If you use a try/catch or even provide an unfulfilled callback for
+    // vscode.workspace.openTextDocument, some errors still get logged in the developer console.
+    return new Promise((resolve, reject) => {
+        fs.readFile(filePath, "utf8", (err, data) => {
+            err ? reject(err) : resolve(new Package(data));
+        });
+    });
+}
+
+// tslint:disable-next-line:no-empty
+export function deactivate() { }
