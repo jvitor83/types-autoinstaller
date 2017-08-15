@@ -1,11 +1,14 @@
 import * as fs from "fs";
+import * as path from "path";
 import * as vscode from "vscode";
 import { Package } from "./Package";
 import { PackageJson } from "./shared";
 import { ChangeCallback, TypingsService } from "./TypesService";
 
-let npmPackageWatcher: Package;
-let bowerPackageWatcher: Package;
+type FileName = "bower.json" | "package.json";
+
+// to store the json of package.json and bower.json
+const packages: { [fileName: string]: Package } = {};
 let outputChannel: vscode.OutputChannel;
 let typingsService: TypingsService;
 
@@ -14,8 +17,9 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel.show();
     context.subscriptions.push(outputChannel);
 
-    startNpmWatch(context);
-    startBowerWatch(context);
+    ["package.json", "bower.json"].forEach((fileName: FileName) => {
+        startWatcher(fileName, context);
+    });
 
     const installAllDependenciesCommand = vscode.commands.registerCommand(
         "types.installAllDependencies",
@@ -47,19 +51,14 @@ function installAllDependencies(context: vscode.ExtensionContext) {
     };
 }
 
-function startNpmWatch(context: vscode.ExtensionContext) {
-    const path = vscode.workspace.rootPath + "/package.json";
+function startWatcher(fileName: FileName, context: vscode.ExtensionContext) {
+    const filePath = path.join(vscode.workspace.rootPath, fileName);
+    const watcher = vscode.workspace.createFileSystemWatcher(filePath);
+    initPackage(fileName, filePath);
 
-    initNpmWatcher(path);
-
-    const watcher = vscode.workspace.createFileSystemWatcher(path);
     watcher.onDidChange((e) => {
-        if (isNpmWatcherDeactivated()) {
-            initNpmWatcher(path);
-        }
-
-        vscode.workspace.openTextDocument(path).then((file) => {
-            const changes = npmPackageWatcher.getDifferences(new Package(file));
+        vscode.workspace.openTextDocument(filePath).then((file) => {
+            const changes = packages[fileName].getDifferences(new Package(file));
             // Install
             installPackages(changes.newDeps, (installCount) => {
                 if (installCount) {
@@ -78,48 +77,18 @@ function startNpmWatch(context: vscode.ExtensionContext) {
     context.subscriptions.push(watcher);
 }
 
-function isNpmWatcherDeactivated() {
-    return !npmPackageWatcher;
-}
-
-function initNpmWatcher(path: string) {
-    vscode.workspace.openTextDocument(path).then((file) => {
-        if (file != null) {
-            npmPackageWatcher = new Package(file);
-            typingsService = new TypingsService(vscode.workspace.rootPath);
+function initPackage(fileName: FileName, filePath: string) {
+    // When you supple an onUnfulfilled callback to vscode.workspace.openTextDocument,
+    // errors still get outputted to the developer console. Using fs allows us to handle all errors
+    fs.readFile(filePath, "utf8", (err, data) => {
+        if (data) {
+            packages[fileName] = new Package(data);
+        } else if (err) {
+            writeOutput(err.message + "\n");
+            packages[fileName] = new Package({ dependencies: {}, devDependencies: {} });
         }
+        typingsService = new TypingsService(vscode.workspace.rootPath);
     });
-}
-
-function startBowerWatch(context: vscode.ExtensionContext) {
-    const path = vscode.workspace.rootPath + "/bower.json";
-
-    initBowerWatcher(path);
-
-    const watcher = vscode.workspace.createFileSystemWatcher(path);
-    watcher.onDidChange((e) => {
-        if (isBowerWatcherDeactivated()) {
-            initBowerWatcher(path);
-        }
-
-        vscode.workspace.openTextDocument(path).then((file) => {
-            const changes = bowerPackageWatcher.getDifferences(new Package(file));
-            // Install
-            installPackages(changes.newDeps, (installCount) => {
-                if (installCount) {
-                    writeOutput(`Installed Types of ${installCount} bower package(s)\n`);
-                }
-                // Uninstall
-                uninstallPackages(changes.removedDeps, (uninstallCount) => {
-                    if (uninstallCount) {
-                        writeOutput(`Uninstalled Types of ${uninstallCount} bower package(s)\n`);
-                    }
-                });
-            });
-        });
-    });
-
-    context.subscriptions.push(watcher);
 }
 
 function installPackages(packageJson: PackageJson, callback: ChangeCallback) {
@@ -142,24 +111,6 @@ function uninstallPackages(packageJson: PackageJson, callback: ChangeCallback) {
         typingsService.uninstall(packageJson.devDependencies || {}, true, writeOutput, (devDepCount) => {
             callback(depCount + devDepCount);
         });
-    });
-}
-
-function isBowerWatcherDeactivated() {
-    return !bowerPackageWatcher;
-}
-
-function initBowerWatcher(path: string) {
-    // using fs here since using vscode.workspace.openTextDocument causes errors to be
-    // thrown if bower.json doesn't exist
-    fs.readFile(path, "utf8", (err, data) => {
-        if (data) {
-            bowerPackageWatcher = new Package(data);
-            typingsService = new TypingsService(vscode.workspace.rootPath);
-        } else if (err && !err.message.includes("ENOENT: no such file")) {
-            // throw the error, unless bower.json doesn't exist
-            throw err;
-        }
     });
 }
 
