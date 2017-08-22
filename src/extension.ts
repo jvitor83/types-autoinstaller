@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 function installAllDependencies(context: vscode.ExtensionContext) {
     const npmPath = vscode.workspace.rootPath + "/package.json";
-    vscode.workspace.openTextDocument(npmPath).then((file) => {
+    openDocument(npmPath, (file) => {
         const packageJson: Package = JSON.parse(file.getText());
         // Install
         installPackages(packageJson, (count) => {
@@ -40,7 +40,7 @@ function installAllDependencies(context: vscode.ExtensionContext) {
 
     const readBower = () => {
         const bowerPath = vscode.workspace.rootPath + "/bower.json";
-        vscode.workspace.openTextDocument(bowerPath).then((file) => {
+        openDocument(bowerPath, (file) => {
             const packageJson: Package = JSON.parse(file.getText());
             // Install
             installPackages(packageJson, (count) => {
@@ -61,7 +61,7 @@ function startNpmWatch(context: vscode.ExtensionContext) {
             initNpmWatcher(path);
         }
 
-        vscode.workspace.openTextDocument(path).then((file) => {
+        openDocument(path, (file) => {
             const packageJson: Package = JSON.parse(file.getText());
             npmPackageWatcher.changed(packageJson, (newPackages, deletedPackes) => {
                 // Install
@@ -88,7 +88,7 @@ function isNpmWatcherDeactivated() {
 }
 
 function initNpmWatcher(path: string) {
-    vscode.workspace.openTextDocument(path).then((file) => {
+    openDocument(path, (file) => {
         if (file != null) {
             const packageJson: Package = JSON.parse(file.getText());
             npmPackageWatcher = new PackageWatcher(packageJson);
@@ -108,7 +108,7 @@ function startBowerWatch(context: vscode.ExtensionContext) {
             initBowerWatcher(path);
         }
 
-        vscode.workspace.openTextDocument(path).then((file) => {
+        openDocument(path, (file) => {
             const bowerJson: Package = JSON.parse(file.getText());
             bowerPackageWatcher.changed(bowerJson, (newPackages, deletedPackes) => {
                 // Install
@@ -162,7 +162,7 @@ function isBowerWatcherDeactivated() {
 }
 
 function initBowerWatcher(path: string) {
-    vscode.workspace.openTextDocument(path).then((file) => {
+    openDocument(path, (file) => {
         const bowerJson: Package = JSON.parse(file.getText());
         bowerPackageWatcher = new PackageWatcher(bowerJson);
         typingsService = new TypingsService(vscode.workspace.rootPath);
@@ -171,6 +171,13 @@ function initBowerWatcher(path: string) {
 
 function writeOutput(message: string) {
     outputChannel.append(message);
+}
+
+function openDocument(filePath: string, onfulfilled: (file: vscode.TextDocument) => void, onrejected?: () => void) {
+    // delay the reading of the document so that vscode has a chance to pick up any external changes (e.g by npm/yarn)
+    setTimeout(() => {
+        vscode.workspace.openTextDocument(filePath).then(onfulfilled, onrejected);
+    }, 800);
 }
 
 // tslint:disable-next-line:no-empty
