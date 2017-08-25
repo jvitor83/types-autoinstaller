@@ -1,12 +1,17 @@
 {
 	"compilerOptions": {
 		"module": "commonjs",
-		"target": "es5",
+		"target": "es6",
+		"lib": [
+			"es6"
+		],
 		"outDir": "out",
-		"noLib": true,
 		"sourceMap": true,
-        "rootDir": ".",
-        "watch": false
+		"strict": true,
+		"skipLibCheck": true,
+		"rootDir": ".",
+		"noUnusedLocals": true,
+		"watch": false
 	},
 	"exclude": [
 		"node_modules"

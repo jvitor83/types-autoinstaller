@@ -1,31 +1,30 @@
 import * as assert from "assert";
-import * as vscode from "vscode";
-import {Package, PackageWatcher} from "../src/PackageWatcher";
+import { Package, PackageWatcher } from "../src/PackageWatcher";
 
 suite("package-watcher Tests", () => {
 
     test("Zero changed packages", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0"
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7",
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0"
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
             assert.equal(Object.keys(newPackages.dependencies).length, 0);
             assert.equal(Object.keys(newPackages.devDependencies).length, 0);
@@ -35,30 +34,30 @@ suite("package-watcher Tests", () => {
     });
 
     test("One new dependency package", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0"
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7",
-                "jasmine": "*"
+                jasmine: "*",
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0"
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(newPackages.dependencies["jasmine"], "*");
+            assert.equal(newPackages.dependencies.jasmine, "*");
             assert.equal(Object.keys(newPackages.dependencies).length, 1);
             assert.equal(Object.keys(newPackages.devDependencies).length, 0);
             assert.equal(Object.keys(deletedPackes.dependencies).length, 0);
@@ -67,31 +66,31 @@ suite("package-watcher Tests", () => {
     });
 
     test("Two new dependency package", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0"
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7",
                 "jasmine": "*",
-                "jasmine-node": "*"
+                "jasmine-node": "*",
+                "json2ts": "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0"
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(newPackages.dependencies["jasmine"], "*");
+            assert.equal(newPackages.dependencies.jasmine, "*");
             assert.equal(newPackages.dependencies["jasmine-node"], "*");
             assert.equal(Object.keys(newPackages.dependencies).length, 2);
             assert.equal(Object.keys(newPackages.devDependencies).length, 0);
@@ -101,28 +100,28 @@ suite("package-watcher Tests", () => {
     });
 
     test("One new devDependency package", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0"
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(newPackages.devDependencies["vscode"], "^0.11.0");
+            assert.equal(newPackages.devDependencies.vscode, "^0.11.0");
             assert.equal(Object.keys(newPackages.dependencies).length, 0);
             assert.equal(Object.keys(newPackages.devDependencies).length, 1);
             assert.equal(Object.keys(deletedPackes.dependencies).length, 0);
@@ -131,30 +130,30 @@ suite("package-watcher Tests", () => {
     });
 
     test("Two new devDependency package", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0",
-                "typescript": "*"
+                typescript: "*",
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(newPackages.devDependencies["vscode"], "^0.11.0");
-            assert.equal(newPackages.devDependencies["typescript"], "*");
+            assert.equal(newPackages.devDependencies.vscode, "^0.11.0");
+            assert.equal(newPackages.devDependencies.typescript, "*");
             assert.equal(Object.keys(newPackages.dependencies).length, 0);
             assert.equal(Object.keys(newPackages.devDependencies).length, 2);
             assert.equal(Object.keys(deletedPackes.dependencies).length, 0);
@@ -163,26 +162,26 @@ suite("package-watcher Tests", () => {
     });
 
     test("One deleted dependency package", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
             },
             devDependencies: {
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(deletedPackes.dependencies["json2ts"], "^0.0.7");
+            assert.equal(deletedPackes.dependencies.json2ts, "^0.0.7");
             assert.equal(Object.keys(newPackages.dependencies).length, 0);
             assert.equal(Object.keys(newPackages.devDependencies).length, 0);
             assert.equal(Object.keys(deletedPackes.dependencies).length, 1);
@@ -191,28 +190,28 @@ suite("package-watcher Tests", () => {
     });
 
     test("Two deleted dependency package", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7",
-                "rxjs": "*"
+                json2ts: "^0.0.7",
+                rxjs: "*",
             },
             devDependencies: {
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
             },
             devDependencies: {
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(deletedPackes.dependencies["json2ts"], "^0.0.7");
-            assert.equal(deletedPackes.dependencies["rxjs"], "*");
+            assert.equal(deletedPackes.dependencies.json2ts, "^0.0.7");
+            assert.equal(deletedPackes.dependencies.rxjs, "*");
             assert.equal(Object.keys(newPackages.dependencies).length, 0);
             assert.equal(Object.keys(newPackages.devDependencies).length, 0);
             assert.equal(Object.keys(deletedPackes.dependencies).length, 2);
@@ -221,28 +220,28 @@ suite("package-watcher Tests", () => {
     });
 
     test("One deleted devDependency package", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0"
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(deletedPackes.devDependencies["vscode"], "^0.11.0");
+            assert.equal(deletedPackes.devDependencies.vscode, "^0.11.0");
             assert.equal(Object.keys(newPackages.dependencies).length, 0);
             assert.equal(Object.keys(newPackages.devDependencies).length, 0);
             assert.equal(Object.keys(deletedPackes.dependencies).length, 0);
@@ -251,30 +250,30 @@ suite("package-watcher Tests", () => {
     });
 
     test("Two deleted devDependency package", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0",
-                "typescript": "*"
+                typescript: "*",
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(deletedPackes.devDependencies["vscode"], "^0.11.0");
-            assert.equal(deletedPackes.devDependencies["typescript"], "*");
+            assert.equal(deletedPackes.devDependencies.vscode, "^0.11.0");
+            assert.equal(deletedPackes.devDependencies.typescript, "*");
             assert.equal(Object.keys(newPackages.dependencies).length, 0);
             assert.equal(Object.keys(newPackages.devDependencies).length, 0);
             assert.equal(Object.keys(deletedPackes.dependencies).length, 0);
@@ -283,34 +282,34 @@ suite("package-watcher Tests", () => {
     });
 
     test("Cross dependencies changed", () => {
-        let packageJson: Package = {
+        const packageJson: Package = {
             dependencies: {
-                "json2ts": "^0.0.7"
+                json2ts: "^0.0.7",
             },
             devDependencies: {
-                "vscode": "^0.11.0",
-                "typescript": "*"
+                typescript: "*",
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let changedPackageJson: Package = {
+        const changedPackageJson: Package = {
             dependencies: {
-                "rxjs": "*"
+                rxjs: "*",
             },
             devDependencies: {
-                "vscode": "^0.11.0",
-                "gulp": "*"
+                gulp: "*",
+                vscode: "^0.11.0",
             },
-            engines: {}
+            engines: {},
         };
 
-        let packageWatcher = new PackageWatcher(packageJson);
+        const packageWatcher = new PackageWatcher(packageJson);
         packageWatcher.changed(changedPackageJson, (newPackages, deletedPackes) => {
-            assert.equal(newPackages.dependencies["rxjs"], "*");
-            assert.equal(newPackages.devDependencies["gulp"], "*");
-            assert.equal(deletedPackes.dependencies["json2ts"], "^0.0.7");
-            assert.equal(deletedPackes.devDependencies["typescript"], "*");
+            assert.equal(newPackages.dependencies.rxjs, "*");
+            assert.equal(newPackages.devDependencies.gulp, "*");
+            assert.equal(deletedPackes.dependencies.json2ts, "^0.0.7");
+            assert.equal(deletedPackes.devDependencies.typescript, "*");
             assert.equal(Object.keys(newPackages.dependencies).length, 1);
             assert.equal(Object.keys(newPackages.devDependencies).length, 1);
             assert.equal(Object.keys(deletedPackes.dependencies).length, 1);
