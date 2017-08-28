@@ -2,7 +2,7 @@
   "name": "types-autoinstaller",
   "displayName": "Types auto installer",
   "description": "Any time you save either package.json or bower.json the types package will be installed/uninstalled automatically in the background.",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "publisher": "jvitor83",
   "author": {
     "name": "Joao Vitor Paes de Barros do Carmo [https://about.me/jvitor83]"
@@ -51,11 +51,13 @@
     "compile": "tsc -watch -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
+  "dependencies": {
+    "lodash": "^4.17.4"
+  },
   "devDependencies": {
     "@types/mocha": "^2.2.42",
     "@types/node": "^8.0.24",
     "@types/lodash": "^4.14.74",
-    "lodash": "^4.17.4",
     "tslint": "^5.5.0",
     "typescript": "next",
     "vscode": "^1.0.0"
