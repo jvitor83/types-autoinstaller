@@ -36,6 +36,11 @@
           "type": "boolean",
           "default": false,
           "description": "Install @types for \"dependencies\" to the \"devDevependencies\" section of package.json"
+        },
+        "types-autoinstaller.useYarn": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use yarn to instead of npm"
         }
       }
     },

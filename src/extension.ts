@@ -91,8 +91,11 @@ function initNpmWatcher(path: string) {
     openDocument(path, (file) => {
         if (file != null) {
             const packageJson: Package = JSON.parse(file.getText());
+            const useYarn: boolean =
+                vscode.workspace.getConfiguration("types-autoinstaller")
+                    .get("useYarn");
             npmPackageWatcher = new PackageWatcher(packageJson);
-            typingsService = new TypingsService(vscode.workspace.rootPath);
+            typingsService = new TypingsService(vscode.workspace.rootPath, useYarn);
         }
     });
 }
@@ -165,7 +168,7 @@ function initBowerWatcher(path: string) {
     openDocument(path, (file) => {
         const bowerJson: Package = JSON.parse(file.getText());
         bowerPackageWatcher = new PackageWatcher(bowerJson);
-        typingsService = new TypingsService(vscode.workspace.rootPath);
+        typingsService = new TypingsService(vscode.workspace.rootPath, false);
     });
 }
 
