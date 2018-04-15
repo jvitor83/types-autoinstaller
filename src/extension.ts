@@ -167,8 +167,11 @@ function isBowerWatcherDeactivated() {
 function initBowerWatcher(path: string) {
     openDocument(path, (file) => {
         const bowerJson: Package = JSON.parse(file.getText());
+        const useYarn: boolean =
+        vscode.workspace.getConfiguration("types-autoinstaller")
+            .get("useYarn");
         bowerPackageWatcher = new PackageWatcher(bowerJson);
-        typingsService = new TypingsService(vscode.workspace.rootPath, false);
+        typingsService = new TypingsService(vscode.workspace.rootPath, useYarn);
     });
 }
 
