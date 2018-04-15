@@ -3,7 +3,7 @@ import { Dependency } from "./PackageWatcher";
 import { InstallCallback, UninstallCallback } from "./shared";
 
 export class TypingsService {
-    constructor(private rootPath: string) { }
+    constructor(private rootPath: string, private useYarn: boolean) { }
 
     public install(
         dependency: Dependency,
@@ -64,6 +64,11 @@ export class TypingsService {
         }
     }
 
+    private installCommand(key: string, isDev: boolean) {
+      const command = this.useYarn ? `yarn add ${isDev ? "-D" : ""}` : `npm install ${isDev ? "--save-dev" : "--save"}`;
+      return `${command} @types/${key}`;
+    }
+
     private installDependency(
         key: string,
         isDev: boolean = false,
@@ -75,12 +80,7 @@ export class TypingsService {
         if (!(key.indexOf("@types") > -1)) {
 
             stateCallback(`Installing types package '${key}'\n`);
-            let saveString = "--save";
-            if (isDev) {
-                saveString = "--save-dev";
-            }
-            const command = `npm install @types/${key} ` + saveString;
-
+            const command = this.installCommand(key, isDev);
             childProcess.exec(command, { cwd: rootPath, env: process.env }, (error, stdout, sterr) => {
                 if (sterr && sterr.indexOf("ERR!") > -1) {
                     if (sterr.match(/ERR! 404/g)) {
@@ -98,6 +98,12 @@ export class TypingsService {
         }
     }
 
+    private uninstallCommand(key: string, isDev: boolean) {
+        const command = this.useYarn ? "yarn remove" : "npm uninstall";
+        const saveString = isDev ? "--save-dev" : "--save";
+        return `${command} @types/${key} ${saveString}`;
+      }
+
     private uninstallDependency(
         key: string,
         isDev: boolean = false,
@@ -106,12 +112,7 @@ export class TypingsService {
         callback: Callback,
     ) {
         stateCallback(`Uninstalling types package '${key}'\n`);
-        let saveString = "--save";
-        if (isDev) {
-            saveString = "--save-dev";
-        }
-        const command = `npm uninstall @types/${key} ` + saveString;
-
+        const command = this.uninstallCommand(key, isDev);
         childProcess.exec(command, { cwd: rootPath, env: process.env }, (error, stdout, sterr) => {
             if (!(error == null && stdout.indexOf("@types") > -1)) {
                 stateCallback(stdout);
