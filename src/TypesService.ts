@@ -65,9 +65,8 @@ export class TypingsService {
     }
 
     private installCommand(key: string, isDev: boolean) {
-      const command = this.useYarn ? "yarn add" : "npm install";
-      const saveString = isDev ? "--save-dev" : "--save";
-      return `${command} @types/${key} ${saveString}`;
+      const command = this.useYarn ? `yarn add ${isDev ? "-D" : ""}` : `npm install ${isDev ? "--save-dev" : "--save"}`;
+      return `${command} @types/${key}`;
     }
 
     private installDependency(
