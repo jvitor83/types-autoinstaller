@@ -1,19 +1,22 @@
 import * as childProcess from "child_process";
-import { Dependency } from "./PackageWatcher";
+import { Dependency } from "./shared";
 import { InstallCallback, UninstallCallback } from "./shared";
 
 export class TypingsService {
-    constructor(private rootPath: string, private useYarn: boolean) { }
+    constructor(private rootPath: string) { }
 
     public install(
         dependency: Dependency,
         isDev: boolean = false,
+        useYarn: boolean = false,
         stateCallback: StateCallback,
         callback: InstallCallback,
     ) {
         const installCommands = Object.keys(dependency).map((key) => {
-            return (installCb: Callback) => this.installDependency(key, isDev, stateCallback, this.rootPath, installCb);
+            return (installCb: Callback) =>
+                this.installDependency(key, isDev, useYarn, stateCallback, this.rootPath, installCb);
         });
+
         if (installCommands && installCommands.length) {
             let successCount = 0;
             const run = (index: number) => {
@@ -37,12 +40,13 @@ export class TypingsService {
     public uninstall(
         dependency: Dependency,
         isDev: boolean = false,
+        useYarn: boolean = false,
         stateCallback: StateCallback,
         callback: UninstallCallback,
     ) {
         const uninstallCommands = Object.keys(dependency).map((key) => {
             return (uninstallCb: Callback) => {
-                this.uninstallDependency(key, isDev, stateCallback, this.rootPath, uninstallCb);
+                this.uninstallDependency(key, isDev, useYarn, stateCallback, this.rootPath, uninstallCb);
             };
         });
         if (uninstallCommands && uninstallCommands.length) {
@@ -64,14 +68,16 @@ export class TypingsService {
         }
     }
 
-    private installCommand(key: string, isDev: boolean) {
-      const command = this.useYarn ? `yarn add ${isDev ? "-D" : ""}` : `npm install ${isDev ? "--save-dev" : "--save"}`;
-      return `${command} @types/${key}`;
+    private installCommand(key: string, isDev: boolean, useYarn: boolean) {
+        const command = useYarn ? "yarn add" : "npm install";
+        const saveString = `${isDev ? "-D" : "--save"}`;
+        return `${command} @types/${key} ${saveString}`;
     }
 
     private installDependency(
         key: string,
         isDev: boolean = false,
+        useYarn: boolean = false,
         stateCallback: StateCallback,
         rootPath: string,
         callback: Callback,
@@ -80,7 +86,7 @@ export class TypingsService {
         if (!(key.indexOf("@types") > -1)) {
 
             stateCallback(`Installing types package '${key}'\n`);
-            const command = this.installCommand(key, isDev);
+            const command = this.installCommand(key, isDev, useYarn);
             childProcess.exec(command, { cwd: rootPath, env: process.env }, (error, stdout, sterr) => {
                 if (sterr && sterr.indexOf("ERR!") > -1) {
                     if (sterr.match(/ERR! 404/g)) {
@@ -98,21 +104,25 @@ export class TypingsService {
         }
     }
 
-    private uninstallCommand(key: string, isDev: boolean) {
-        const command = this.useYarn ? "yarn remove" : "npm uninstall";
-        const saveString = isDev ? "--save-dev" : "--save";
-        return `${command} @types/${key} ${saveString}`;
-      }
+    private uninstallCommand(key: string, isDev: boolean, useYarn: boolean) {
+        if (useYarn) {
+            return `yarn remove @types/${key}`;
+        }
+
+        const saveString = isDev ? "-D" : "--save";
+        return `npm uninstall @types/${key} ${saveString}`;
+    }
 
     private uninstallDependency(
         key: string,
         isDev: boolean = false,
+        useYarn: boolean = false,
         stateCallback: StateCallback,
         rootPath: string,
         callback: Callback,
     ) {
         stateCallback(`Uninstalling types package '${key}'\n`);
-        const command = this.uninstallCommand(key, isDev);
+        const command = this.uninstallCommand(key, isDev, useYarn);
         childProcess.exec(command, { cwd: rootPath, env: process.env }, (error, stdout, sterr) => {
             if (!(error == null && stdout.indexOf("@types") > -1)) {
                 stateCallback(stdout);

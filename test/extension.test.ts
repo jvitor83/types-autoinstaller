@@ -1,5 +1,6 @@
 import * as assert from "assert";
-import { Package, PackageWatcher } from "../src/PackageWatcher";
+import PackageWatcher from "../src/PackageWatcher";
+import { Package } from "../src/Shared";
 
 suite("package-watcher Tests", () => {
 

@@ -1,7 +1,8 @@
 "use strict";
 
 import * as vscode from "vscode";
-import { Package, PackageWatcher } from "./PackageWatcher";
+import PackageWatcher from "./PackageWatcher";
+import { Package } from "./shared";
 import { InstallCallback, UninstallCallback } from "./shared";
 import { TypingsService } from "./TypesService";
 
@@ -31,7 +32,7 @@ function installAllDependencies(context: vscode.ExtensionContext) {
         const packageJson: Package = JSON.parse(file.getText());
         // Install
         installPackages(packageJson, (count) => {
-            writeOutput(`Installed Types of ${count} npm package(s)\n`);
+            writeOutput(`Installed Types of ${count} npm/yarn package(s)\n`);
             readBower();
         });
     }, () => {
@@ -67,12 +68,12 @@ function startNpmWatch(context: vscode.ExtensionContext) {
                 // Install
                 installPackages(newPackages, (installCount) => {
                     if (installCount) {
-                        writeOutput(`Installed Types of ${installCount} npm package(s)\n`);
+                        writeOutput(`Installed Types of ${installCount} npm/yarn package(s)\n`);
                     }
                     // Uninstall
                     uninstallPackages(deletedPackes, (uninstallCount) => {
                         if (uninstallCount) {
-                            writeOutput(`Uninstalled Types of ${uninstallCount} npm package(s)\n`);
+                            writeOutput(`Uninstalled Types of ${uninstallCount} npm/yarn package(s)\n`);
                         }
                     });
                 });
@@ -91,11 +92,8 @@ function initNpmWatcher(path: string) {
     openDocument(path, (file) => {
         if (file != null) {
             const packageJson: Package = JSON.parse(file.getText());
-            const useYarn: boolean =
-                vscode.workspace.getConfiguration("types-autoinstaller")
-                    .get("useYarn");
             npmPackageWatcher = new PackageWatcher(packageJson);
-            typingsService = new TypingsService(vscode.workspace.rootPath, useYarn);
+            typingsService = new TypingsService(vscode.workspace.rootPath);
         }
     });
 }
@@ -138,10 +136,11 @@ function installPackages(packageJson: Package, callback: InstallCallback, instal
     // devDepenencies section of package.json. This is ideal behaviour if you're
     // not going to be publishing your package to the registry.
     const devOverride: boolean = vscode.workspace.getConfiguration("types-autoinstaller").get("saveAsDevDependency");
+    const yarnOverride: boolean = vscode.workspace.getConfiguration("types-autoinstaller").get("useYarn");
 
-    typingsService.install(packageJson.dependencies || {}, devOverride, writeOutput, (counta) => {
-        typingsService.install(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
-            typingsService.install(packageJson.engines || {}, false, writeOutput, (countc) => {
+    typingsService.install(packageJson.dependencies || {}, devOverride, yarnOverride, writeOutput, (counta) => {
+        typingsService.install(packageJson.devDependencies || {}, true, yarnOverride, writeOutput, (countb) => {
+            typingsService.install(packageJson.engines || {}, false, yarnOverride, writeOutput, (countc) => {
                 callback(counta + countb + countc);
             });
         });
@@ -150,10 +149,11 @@ function installPackages(packageJson: Package, callback: InstallCallback, instal
 
 function uninstallPackages(packageJson: Package, callback: UninstallCallback) {
     const devOverride: boolean = vscode.workspace.getConfiguration("types-autoinstaller").get("saveAsDevDependency");
+    const yarnOverride: boolean = vscode.workspace.getConfiguration("types-autoinstaller").get("useYarn");
 
-    typingsService.uninstall(packageJson.dependencies || {}, devOverride, writeOutput, (counta) => {
-        typingsService.uninstall(packageJson.devDependencies || {}, true, writeOutput, (countb) => {
-            typingsService.uninstall(packageJson.engines || {}, false, writeOutput, (countc) => {
+    typingsService.uninstall(packageJson.dependencies || {}, devOverride, yarnOverride, writeOutput, (counta) => {
+        typingsService.uninstall(packageJson.devDependencies || {}, true, yarnOverride, writeOutput, (countb) => {
+            typingsService.uninstall(packageJson.engines || {}, false, yarnOverride, writeOutput, (countc) => {
                 callback(counta + countb + countc);
             });
         });
@@ -167,11 +167,8 @@ function isBowerWatcherDeactivated() {
 function initBowerWatcher(path: string) {
     openDocument(path, (file) => {
         const bowerJson: Package = JSON.parse(file.getText());
-        const useYarn: boolean =
-        vscode.workspace.getConfiguration("types-autoinstaller")
-            .get("useYarn");
         bowerPackageWatcher = new PackageWatcher(bowerJson);
-        typingsService = new TypingsService(vscode.workspace.rootPath, useYarn);
+        typingsService = new TypingsService(vscode.workspace.rootPath);
     });
 }
 
