@@ -1,18 +1,9 @@
 import { forOwn } from "lodash";
-
-export interface Dependency {
-    [packageName: string]: string;
-}
-
-export interface Package {
-    engines: Dependency;
-    dependencies: Dependency;
-    devDependencies: Dependency;
-}
+import { Dependency, Package } from "./shared";
 
 type DetectedChangesCallback = (newPackages: Package, deletedPackes: Package) => any;
 
-export class PackageWatcher {
+export default class PackageWatcher {
     constructor(private packageJson: Package) {
     }
 
