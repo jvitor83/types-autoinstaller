@@ -13,7 +13,7 @@ let typingsService: TypingsService;
 
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel("Types AutoInstaller Watcher");
-    outputChannel.show();
+    // outputChannel.show();
     context.subscriptions.push(outputChannel);
 
     startNpmWatch(context);
